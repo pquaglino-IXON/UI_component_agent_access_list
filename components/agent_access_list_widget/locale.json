@@ -1,0 +1,31 @@
+{
+    "it" :{
+            "networkerror": "Errore di rete",
+            "dataerror": "errore nei dati",
+            "lookingagents": "Ricerca agenti con datalogging attivo",
+            "agentlist": "Raccolta lista agenti",
+            "sofar": "trovati finora",
+            "found": "Agent trovati",
+            "status": "Stato",
+            "name": "Nome",
+            "serial": "Numero di serie",
+            "valuesPerHour": "Datapoint / ora",
+            "search": "Cerca",
+            "dph" : "Calcolato sulla base delle tag campionate a intervalli regolari"
+    }
+    ,
+    "en" :{
+            "networkerror": "Network error",
+            "dataerror": "Data error",
+            "lookingagents": "Looking for datalogging agents",
+            "agentlist": "Fetching agent list",
+            "sofar": "found so far",
+            "found": "Agents found",
+            "status": "Status",
+            "name": "Name",
+            "serial": "Serial number",
+            "valuesPerHour": "Datapoint / hour",
+            "search": "Search",
+            "dph": "Calculated based on tags sampled at regular intervals"
+    }   
+}

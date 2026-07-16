@@ -1,0 +1,43 @@
+{
+  "main": "pct-agent_access_list_widget.min.js",
+  "version": "5",
+  "sheetSettings": {
+    "defaultCols": 6,
+    "defaultRows": 6,
+    "minCols": 3,
+    "minRows": 3
+  },
+  "inputs": [
+     {
+      "key": "title",
+      "type": "String",
+      "label": "Title",
+      "placeholder": "Enter title text",
+      "translate": true
+    },
+    {
+      "key": "showPermanent",
+      "type": "Checkbox",
+      "label": "Show permanent users",
+      "defaultValue": true
+    },
+    {
+      "key": "showTemporary",
+      "type": "Checkbox",
+      "label": "Show temporary users",
+      "defaultValue": true
+    },
+    {
+      "key": "showServiceAccounts",
+      "type": "Checkbox",
+      "label": "Show service accounts (API clients)",
+      "defaultValue": false
+    },
+    {
+      "key": "showCompanyAccess",
+      "type": "Checkbox",
+      "label": "Show company access",
+      "defaultValue": true
+    }  
+  ]
+}

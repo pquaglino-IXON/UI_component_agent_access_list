@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/@ixon-cdk/core/config/schema.json",
+  "prefix": "pct",
+  "components": {
+    "agent_access_list_widget": {
+      "runner": {
+        "build": {
+          "builder": "@ixon-cdk/svelte-builder:browser",
+          "input": "agent_access_list_widget.svelte"
+        },
+        "deploy": {
+          "company": "4809-4574-2117-6244-0981",
+          "template": "pgjKHeQQU0Yh"
+        }
+      }
+    }
+  }
+}
