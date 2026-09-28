@@ -1,8 +1,8 @@
 <script lang="ts">
   /*
-  npx cdk simulate datalogging-agents
-  npx cdk deploy datalogging-agents
-  npx cdk publish datalogging-agents
+  npx cdk simulate agent_access_list_widget
+  npx cdk deploy agent_access_list_widget
+  npx cdk publish agent_access_list_widget
   */
 
   import type { ComponentContext } from '@ixon-cdk/types';
@@ -15,21 +15,26 @@
 
   let rows: Array<agentUserType> = []; // rows returned from api call
   let displayRows: Array<agentUserType> = []; // actual rows displayed (filtered, sorted..)
-  let statusMessage: string = ""; // status message to show to the user
+  let statusMessage: string = ""; // status message shown to the user
+  
   let nameSortAsc = true; //sort status, toggle
   let roleSortAsc = true; // sort status, toggle
   let groupSortAsc = false; // sort status, toggle
   let expirationSortAsc = false; // sort status, toggle
+
   let translations: Record<string, string>;
   let searchActive = false; // to show/hide tools when searchbox is active
   let searchInput: HTMLInputElement; // search input field, binding to manipulate it (focus, empty,..)
   let searchT: string;
   let myTranslations: Record<string, Record<string, string>>; // custom translations for the component
   let t: Record<string, string>; // actual translation based on the user's language
+
+  // Inputs
   let showPermanentUsers: boolean;
   let showTemporaryUsers: boolean;
   let showServiceAccounts: boolean;
   let showCompanyAccess: boolean;
+  let listAllUsers: boolean; // "Main page mode"
   let widgetTitle: string;
 
   const resourceDataClient = context.createResourceDataClient();    
@@ -42,6 +47,7 @@
     showServiceAccounts = context.inputs.showServiceAccounts;
     widgetTitle =         context.inputs.title;
     showCompanyAccess =   context.inputs.showCompanyAccess;
+    listAllUsers =        context.inputs.listAllUsers;
     
     translations = context.translate(
       [
@@ -80,29 +86,66 @@
 
   async function GetData() {
     
-    let resp = await queryResourceDataClient('Agent', ['name'])
-    if (resp == null) {
-      return {'data': null, 'errorMsg': 'Agent not found', 'status': false };
+    let agentId = null;
+    if (!listAllUsers) {
+      let resp = await queryResourceDataClient('Agent', ['name'])
+      if (resp == null) {
+        return {'data': null, 'errorMsg': 'Agent not found', 'status': false };
+      }
+      agentId = resp['publicId']
     }
 
-    let agentId = resp['publicId']
+    let agent = null;
+    let agentList = null;
+    let assetList = null;
+    let url = '';
+    let response = null;
+
+    if (!listAllUsers) {
       
-    // Recupero gruppi agent
-    let url = context.getApiUrl('Agent').replace('{publicId}',agentId) + '?fields=memberships.group'
-    //console.log(url)
-    let response = await ApiCall(url, 'GET');
-    if (!response.status) 
-      return {"data" : null, "status" : false, "errorMsg" : response.errorMsg };
-    if (!response.data || response.data.length === 0) {
-      return {"data" : null, "status" : false, "errorMsg" : 'No data returned from Agent endpoint'};
+      // Fetch agent data with memberships
+      
+      url = context.getApiUrl('Agent').replace('{publicId}',agentId) + '?fields=memberships.group'
+      //console.log(url)
+      response = await ApiCall(url, 'GET');
+      if (!response.status) 
+        return {"data" : null, "status" : false, "errorMsg" : response.errorMsg };
+      if (!response.data || response.data.length === 0) {
+        return {"data" : null, "status" : false, "errorMsg" : 'No data returned from Agent endpoint'};
+      }
+      agent = response.data[0]
     }
-    let agent = response.data[0]
+    else { 
+
+      // Main page mode
+      // Fetch all agents anbd assets with memberships
+
+      url = context.getApiUrl('AgentList') + '?fields=name'
+      response = await ApiCall(url, 'GET');
+      if (!response.status) 
+        return {"data" : null, "status" : false, "errorMsg" : response.errorMsg };
+      if (!response.data || response.data.length === 0) {
+        return {"data" : null, "status" : false, "errorMsg" : 'No data returned from AgentList endpoint'};
+      }
+      agentList = new Map(response.data.map((obj) => [obj['publicId'], obj]));
+
+      url = context.getApiUrl('AssetList') + '?fields=name'
+      response = await ApiCall(url, 'GET');
+      if (!response.status) 
+        return {"data" : null, "status" : false, "errorMsg" : response.errorMsg };
+      if (!response.data || response.data.length === 0) {
+        return {"data" : null, "status" : false, "errorMsg" : 'No data returned from AssetList endpoint'};
+      }
+      assetList = new Map(response.data.map((obj) => [obj['publicId'], obj]));
+    }
     
     //console.log('Agent: \n')
     //console.log(agent)
+    //console.log(agentList)
 
-    // Recupero lista utenti
-    url = context.getApiUrl('UserList') + '?fields=name, type, emailAddress,memberships.expiresOn,memberships.group,memberships.role&page-size=4000'
+    // Fetch users with memberships
+
+    url = context.getApiUrl('UserList') + '?fields=name,type,emailAddress,memberships.expiresOn,memberships.group,memberships.role&page-size=4000'
     response = await ApiCall(url, 'GET');
     if (!response.status) 
       return {"data" : null, "status" : false, "errorMsg" : response.errorMsg };
@@ -114,7 +157,8 @@
     // console.log('users:')
     // console.log(users)
 
-    // Recupero lista gruppi
+    // Fetch groups
+
     url = context.getApiUrl('GroupList') + '?fields=name,agent,asset,isCompanyGroup&page-size=4000'
     response = await ApiCall(url, 'GET');
     if (!response.status) 
@@ -127,7 +171,8 @@
     //  console.log('groups:')
     //  console.log(groups)
 
-    // Recupero lista ruoli
+    // Fetch roles
+
     url = context.getApiUrl('RoleList') + '?page-size=4000'
     response = await ApiCall(url, 'GET');
     if (!response.status) 
@@ -140,19 +185,24 @@
     // console.log(roles)
 
     
-    // Trova gruppi a cui l'agent appartiene
+    // Find groups the agent belongs to
     let agentGroups = new Set<any>()
-    agent['memberships'].forEach((membership: any) => {
-      agentGroups.add(membership['group']['publicId'])
-    })
+    if (!listAllUsers) {
+      agent['memberships'].forEach((membership: any) => {
+        agentGroups.add(membership['group']['publicId'])
+      })
+    }
+
+    // Prepare to build the result
 
     let agentUsers: Array<agentUserType> = [];
 
-    // console.log('Cerco utenti agent')
     users.forEach(user => {
-      let memberships = []
       //console.log('User ' + user['name'])
+      
       if (!showServiceAccounts &&  user['type'] == 'service_account') return;
+      
+      let memberships = []      
       user['memberships'].forEach((membership: any) => {
         //console.log('membership ' + membership['publicId'])
         if (membership['role'] == null) {
@@ -164,7 +214,8 @@
         
         //console.log('check GroupId in agentGroups ' + membershipGroupId)
 
-        if (agentGroups.has(membershipGroupId)) {
+        // If this user's memberships is also one of the agent's
+        if (agentGroups.has(membershipGroupId) || listAllUsers) {
           //console.log('.       found one')
           //console.log(membership)
 
@@ -176,25 +227,36 @@
 
           let groupName = (groups.has(membershipGroupId))?groups.get(membershipGroupId)['name'] || 'n/a':'-'
 
+          // Manage special groups: Company-wide and device-specific
+
           if (groups.has(membershipGroupId)) {
             let g = groups.get(membershipGroupId)
             if (g['isCompanyGroup'])
               if (showCompanyAccess)
-                groupName = "(Company access)"
+                groupName = "* Company access"
               else
                 return
             else
               groupName = g['name']
+
+            // Find device/asset specific roles
             if (groupName == null) {
-              if (g['asset'] != null || g['agent'] != null) {
-                groupName = '(Device specific access)'
-                // console.log(g)
+              if (g['agent'] != null) {                
+                groupName = '* Device specific'
+                if (listAllUsers && agentList) {
+                  groupName += ' ' + agentList.get(g['agent']['publicId'])['name']
+                }
               }
-              
+              else if (g['asset'] != null) {                
+                groupName = '* Device specific'
+                if (listAllUsers && assetList) {
+                  groupName += ' ' + assetList.get(g['asset']['publicId'])['name']
+                }
+              }
             }
           }
-          let roleName = (roles.has(membershipGroupRole))?roles.get(membershipGroupRole)['name'] || 'n/a':'-'
 
+          let roleName = (roles.has(membershipGroupRole))?roles.get(membershipGroupRole)['name'] || 'n/a':'-'
           let name = user['name'] || ''
           if (user['type'] == 'service_account') name = '[Service account] ' + name;
           

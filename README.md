@@ -1,3 +1,17 @@
+# Agent Access List
+
+Sometimes you need to show information about users even to those who can't access the Fleet Manager.
+For example, a service engineer can see if the customer has access to a specific device, or a service manager can check all of the customers that are expiring next month.
+This component serves this purpose, and has some configuration options:
+- Show permanent users: Non-expiring users date are listed
+- Show temporary users: Temporary-access users are listed
+- Show service accounts: Service accounts are listed
+- Show company access: Company-wide users are listed
+- List all users: Normally the component lists only the users with access to the specific device. If you put it in a Main Page, and/or want to pick all users in the company, check this option (previous filters are applied anyway)
+
+For info about how to deploy this component see the sections below.
+Don't forget to check the full online documentation [here](https://developer.ixon.cloud/docs/what-is-the-app-engine)
+
 # IXON Custom Component Workspace
 
 Welcome to your workspace for developing UI Components for the IXON Cloud. Note that creating UI Components requires you to be able to write JavaScript or Typescript code, and that you are familiar with the [Node.js](https://nodejs.org/) ecosystem. Experience with a web framework such as [Vue](https://vuejs.org/) or [Svelte](https://svelte.dev/) will come in handy as well.

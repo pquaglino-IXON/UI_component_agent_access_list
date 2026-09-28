@@ -1,6 +1,6 @@
 {
   "main": "pct-agent_access_list_widget.min.js",
-  "version": "5",
+  "version": "6",
   "sheetSettings": {
     "defaultCols": 6,
     "defaultRows": 6,
@@ -38,6 +38,12 @@
       "type": "Checkbox",
       "label": "Show company access",
       "defaultValue": true
+    },
+    {
+      "key": "listAllUsers",
+      "type": "Checkbox",
+      "label": "List all users (Main Page mode)",
+      "defaultValue": false
     }  
   ]
 }
