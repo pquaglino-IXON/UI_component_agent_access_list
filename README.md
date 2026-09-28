@@ -9,6 +9,8 @@ This component serves this purpose, and has some configuration options:
 - Show company access: Company-wide users are listed
 - List all users: Normally the component lists only the users with access to the specific device. If you put it in a Main Page, and/or want to pick all users in the company, check this option (previous filters are applied anyway)
 
+![image](preview.png)
+
 For info about how to deploy this component see the sections below.
 Don't forget to check the full online documentation [here](https://developer.ixon.cloud/docs/what-is-the-app-engine)
 
